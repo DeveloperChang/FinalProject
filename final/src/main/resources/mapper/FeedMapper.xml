@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.mapper.FeedMapper">
+     
+     <select id="feedView" resultType="com.example.domain.BoardVO">
+	     <![CDATA[
+			select b.*, u.u_image, u.nickname, u.introduce, @rownum := @rownum+1 AS r from board b, (SELECT @rownum :=0) AS R, (select target from follower where follower=#{id}) a,users u 
+			where b.id=a.target and b.id=u.id and report < 10 order by r desc limit 0,5
+		]]>
+    </select>
+	
+	<select id="infiniteScrollDown" resultType="com.example.domain.BoardVO">
+		<![CDATA[
+			select r.* from (select b.*, u.u_image, u.nickname, u.introduce, @rownum := @rownum+1 AS r from board b,
+			(SELECT @rownum :=0) AS R, (select target from follower where follower=#{id}) a,users u
+			where b.id=a.target and b.id=u.id) r where r<=#{r} and r>#{r}-5 order by b_no desc
+		]]>
+	</select>
+	
+    <select id="getFollowing" resultType="int">
+   	 select count(*) from follower where follower=#{id};
+    </select>
+       
+    <select id="feedList" resultType="com.example.domain.BoardVO">
+    	select a.*
+    	from (select b.*, f.* from board b, follower f where b.id=f.target) a, board b 
+    	where follower=#{id}
+    	group by target
+    	order by date desc
+    	limit 0,#{targetCnt}
+    </select>
+</mapper>

@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.mapper.BoardMapper">
+	<insert id="finit">
+		set foreign_key_checks = 0
+	</insert>
+	
+	<insert id="fover">
+		set foreign_key_checks = 1
+	</insert>
+
+	<select id="list" resultType="com.example.domain.BoardVO">
+		<![CDATA[
+			select b.*, u.nickname, u.u_image, @rownum := @rownum+1 AS r from board b, users u,(SELECT @rownum :=0) AS R where b_no>0 and b.id=u.id and report<10 order by b_no desc limit 0,10
+		]]>
+	</select>
+	<select id="listA" resultType="com.example.domain.BoardVO">
+		<![CDATA[
+    		 select b.*, u.nickname, u.u_image, @rownum := @rownum+1 AS r from board b, users u,(SELECT @rownum :=0) AS R where b.id=u.id and report<10 order by b_like desc limit 0,10
+    	]]>
+    </select>
+    <select id="listB" resultType="com.example.domain.BoardVO">
+    	<![CDATA[
+      		select b.*, u.nickname, u.u_image, @rownum := @rownum+1 AS r from board b, users u,(SELECT @rownum :=0) AS R where b.id=u.id and report<10 order by view desc limit 0,10
+       	]]>
+    </select>
+	
+	<select id="infiniteScrollDown" resultType="com.example.domain.BoardVO">
+		<![CDATA[
+			select r.* from (select b.*, u.nickname, u.u_image, @rownum := @rownum+1 AS r from board b, users u,(SELECT @rownum :=0) AS R where b_no>0 and b.id=u.id and report<10 order by b_no desc) r
+			where r>=#{r} and r<#{r}+10
+		]]>
+	</select>
+	
+	<select id="AinfiniteScrollDown" resultType="com.example.domain.BoardVO">
+		<![CDATA[
+			select r.* from (select b.*, u.nickname, u.u_image, @rownum := @rownum+1 AS r from board b, users u,(SELECT @rownum :=0) AS R where b.id=u.id and report<10 order by b_like desc) r
+			where r>=#{r} and r<#{r}+10;
+		]]>
+	</select>
+	
+	<select id="BinfiniteScrollDown" resultType="com.example.domain.BoardVO">
+		<![CDATA[
+			select r.* from (select b.*, u.nickname, u.u_image, @rownum := @rownum+1 r from board b, users u,(SELECT @rownum :=0) R where b.id=u.id and report<10 order by view desc) r
+			where r>=#{r} and r<#{r}+10;
+		]]>
+	</select>
+	
+	<select id="read" resultType="com.example.domain.BoardVO">
+		select b.*,u.nickname,u.introduce,u.u_image from board b, users u where b.id=u.id and b_no=#{b_no};  
+	</select>
+	<insert id="insert">
+		insert into board(id,title,content,image,date)
+		values(#{id},#{title},#{content},#{image},now())
+	</insert>
+	<delete id="delete">
+		delete from board where b_no=#{b_no}
+	</delete>
+	<update id="update">
+		update board set title=#{title},content=#{content},image=#{image} where b_no=#{b_no}
+	</update>
+	  
+	<select id="BnoRead" resultType="int">
+		select * from board where id=#{id} and title=#{title} and content=#{content}
+		and image=#{image}
+	</select>
+	<insert id="addB_imagelist">
+		insert into b_imagelist(images,b_no) values(#{images},#{b_no})
+	</insert>
+	<select id="getB_imagelist" resultType="string">
+		select images from b_imagelist where b_no=#{b_no} 
+	</select>
+	<delete id="delB_imagelist">
+		delete from b_imagelist where b_no=#{b_no}
+	</delete>
+	
+	
+	<!-- like 부문 -->
+	<select id="likeTableChk" resultType="int">
+		select count(*) from b_like where id=#{id} and b_no=#{b_no}
+	</select>
+	
+	<insert id="likeinsert">
+		insert into b_like values(#{id},#{b_no})
+	</insert>
+	
+	<delete id="likedelete">
+		delete from b_like where id=#{id} and b_no=#{b_no}
+	</delete>
+	
+	<select id="likeTableCnt" resultType="int">
+		select count(*) from b_like where b_no=#{b_no}
+	</select>
+	
+	<update id="B_likeUpdate">
+		update board set b_like=#{like} where b_no=#{b_no} 
+	</update>
+	
+	<!-- report 부문 -->
+	<select id="reportCnt" resultType="int">
+		select count(*) from report where id=#{id} and b_no=#{b_no}
+	</select>
+	<insert id="reportInsert">
+		insert into report(id,content,date,b_no) values(#{id},#{content},now(),#{b_no})
+	</insert>
+	<select id="BoardReportCnt" resultType="int">
+		select count(*) from report where b_no=#{b_no}
+	</select>
+	<update id="updateReport">
+		update board set report=#{report} where b_no=#{b_no}
+	</update>
+	<!-- view 부문 -->
+	
+	<update id="updateView">
+		update board set view = #{view} +1 where b_no=#{b_no}
+	</update>
+	
+	<!-- reply 부문 -->
+	<select id="r_cnt" resultType="int">
+		select count(*) from b_reply where b_no=#{b_no}
+	</select>
+	<update id="board_r_cnt_update">
+		update board set r_cnt=#{r_cnt} where b_no=#{b_no}
+	</update>
+	
+	<select id="reportList" resultType="com.example.domain.BoardVO">
+		select * from board where report>=10 order by report desc
+	</select>
+
+	<select id="reportCount" resultType="int">
+		select count(*) from board where report>=10
+	</select>
+	<select id="reportContent" resultType="com.example.domain.BoardVO">
+		select b_no, id, content, date from report where b_no=#{b_no}
+	</select>
+	<update id="boardReportZero">
+		update board set report=0 where b_no=#{b_no}
+	</update>
+	<delete id="reportDelete">
+		delete from report where b_no=#{b_no}	
+	</delete>
+	
+</mapper>
